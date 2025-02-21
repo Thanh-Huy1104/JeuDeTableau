@@ -12,14 +12,14 @@ class CPUPlayer {
     // au début de votre MinMax ou Alpha Beta.
     private int numExploredNodes;
 
-    private Mark cpu;
-    private Mark adversaire;
+    private Mark max;
+    private Mark min;
 
     // Le constructeur reçoit en paramètre le
     // joueur MAX (X ou O)
     public CPUPlayer(Mark cpu) {
-        this.cpu = cpu;
-        this.adversaire = cpu.equals(Mark.X) ? Mark.O: Mark.X;
+        this.max = cpu;
+        this.min = cpu.equals(Mark.X) ? Mark.O: Mark.X;
     }
 
     // Ne pas changer cette méthode
@@ -31,83 +31,66 @@ class CPUPlayer {
     // plusieurs coups possibles si et seuleument si plusieurs coups
     // ont le même score.
     public ArrayList<Move> getNextMoveMinMax(Board board) {
-        this.numExploredNodes = 0;
+        numExploredNodes = 0;
+        ArrayList<Move> bestMoves = new ArrayList<>();
+        int bestScore = Integer.MIN_VALUE;
+        Move[] possibleMoves = board.getPossibleMoves();
 
-        ArrayList<Move> move_possibles = new ArrayList<Move>();
-        int maxscore = Integer.MIN_VALUE;
+        for (Move move : possibleMoves) {
+            board.play(move, this.max);
+            int score = minimax(board, this.min);
 
-        //Pour chaque case vide, on clone le board, on joue le coup et on appelle la fonction MiniMax
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-
-                Board tempBoard = board.clone();
-                if (tempBoard.getBoard()[i][j].equals(Mark.EMPTY)) {
-                    Move cpuMove = new Move(i, j);
-                    tempBoard.play(cpuMove, cpu);
-                    int score = MiniMax(adversaire, tempBoard);
-
-                    //On ajoute le coup à la liste si le score est plus grand que le maxscore
-                    if (score > maxscore) {
-                        maxscore = score;
-                        move_possibles.clear();
-                        move_possibles.add(cpuMove);
-                    } else if (score == maxscore) {
-                        move_possibles.add(cpuMove);
-                    }
-                }
+            if (score > bestScore) {
+                bestScore = score;
+                bestMoves.clear();
+                bestMoves.add(move);
+            } else if (score == bestScore) {
+                bestMoves.add(move);
             }
+
+            board.undo(move);
         }
-        return move_possibles;
+
+        return bestMoves;
     }
 
-    public int MiniMax(Mark joueur, Board board) {
+    public int minimax(Board board, Mark player) {
+        numExploredNodes++;
+        int evaluation = board.evaluate(this.max);
 
-        int scoreFinale = board.evaluate(cpu);
-        this.numExploredNodes += 1;
-
-        if (scoreFinale != 0 || board.full()) {
-            return scoreFinale;
+        if (evaluation != Board.CONTINUE) {
+            return evaluation;
         }
 
-        if (joueur.equals(cpu)) {
-            int maxscore = Integer.MIN_VALUE;
+        Move[] possibleMoves = board.getPossibleMoves();
 
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
+        if (player == this.max) {
+            int maxScore = Integer.MIN_VALUE;
 
-                    Board tempBoard = board.clone();
+            for (Move move : possibleMoves) {
+                board.play(move, player);
+                int score = minimax(board, this.min);
+                maxScore = Math.max(maxScore, score);
 
-                    if (tempBoard.getBoard()[i][j].equals(Mark.EMPTY)) {
-
-                        tempBoard.play(new Move(i, j), joueur);
-                        int score = MiniMax(adversaire, tempBoard);
-                        maxscore = Math.max(maxscore, score);
-
-                    }
-                }
+                board.undo(move);
             }
-            return maxscore;
-        }
 
-        else if (joueur.equals(adversaire)) {
-            int minscore = Integer.MAX_VALUE;
+            return maxScore;
+        } else if (player == this.min) {
+            int minScore = Integer.MAX_VALUE;
 
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
+            for (Move move : possibleMoves) {
+                board.play(move, player);
+                int score = minimax(board, this.max);
+                minScore = Math.min(minScore, score);
 
-                    Board tempBoard = board.clone();
-                    if (tempBoard.getBoard()[i][j].equals(Mark.EMPTY)) {
-
-                        tempBoard.play(new Move(i, j), joueur);
-                        int score = MiniMax(cpu, tempBoard);
-                        minscore = Math.min(minscore, score);
-
-                    }
-                }
+                board.undo(move);
             }
-            return minscore;
+
+            return minScore;
         }
-        return 0;
+
+        return -1; // Il y a eu une erreur quelque part
     }
 
     // Retourne la liste des coups possibles.  Cette liste contient
@@ -115,85 +98,74 @@ class CPUPlayer {
     // ont le même score.
     public ArrayList<Move> getNextMoveAB(Board board) {
         numExploredNodes = 0;
+        ArrayList<Move> bestMoves = new ArrayList<>();
+        int bestScore = Integer.MIN_VALUE;
+        Move[] possibleMoves = board.getPossibleMoves();
 
-        ArrayList<Move> move_possibles = new ArrayList<Move>();
-        int maxscore = Integer.MIN_VALUE;
+        for (Move move : possibleMoves) {
+            board.play(move, this.max);
+            int score = alphaBeta(board, this.min, Integer.MIN_VALUE, Integer.MAX_VALUE);
 
-        //Pour chaque case vide, on clone le board, on joue le coup et on appelle la fonction MiniMaxAlphaBeta
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-
-                Board tempBoard = board.clone();
-                if (tempBoard.getBoard()[i][j].equals(Mark.EMPTY)) {
-                    Move cpuMove = new Move(i, j);
-                    tempBoard.play(cpuMove, cpu);
-                    int score = MiniMaxAlphaBeta(tempBoard, adversaire, Integer.MIN_VALUE, Integer.MAX_VALUE);
-
-                    //On ajoute le coup à la liste si le score est plus grand que le maxscore
-                    if (score > maxscore) {
-                        maxscore = score;
-                        move_possibles.clear();
-                        move_possibles.add(cpuMove);
-                    } else if (score == maxscore) {
-                        move_possibles.add(cpuMove);
-                    }
-                }
+            if (score > bestScore) {
+                bestScore = score;
+                bestMoves.clear();
+                bestMoves.add(move);
+            } else if (score == bestScore) {
+                bestMoves.add(move);
             }
+
+            board.undo(move);
         }
-        return move_possibles;
+
+        return bestMoves;
     }
 
-    public int MiniMaxAlphaBeta(Board board, Mark joueur, int alpha, int beta) {
-        int scoreFinale = board.evaluate(cpu);
-        this.numExploredNodes += 1;
+    public int alphaBeta(Board board, Mark player, int alpha, int beta) {
+        numExploredNodes++;
+        int evaluation = board.evaluate(this.max);
 
-        if (scoreFinale != 0 || board.full()) {
-            return scoreFinale;
+        if (evaluation != Board.CONTINUE) {
+            return evaluation;
         }
 
-        if (joueur.equals(cpu)) {
+        Move[] possibleMoves = board.getPossibleMoves();
+
+        if (player == this.max) {
             int alphaT = Integer.MIN_VALUE;
 
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
+            for (Move move : possibleMoves) {
+                board.play(move, player);
+                int score = alphaBeta(board, this.min, Math.max(alphaT, alpha), beta);
+                alphaT = Math.max(alphaT, score);
 
-                    Board tempBoard = board.clone();
-                    if (tempBoard.getBoard()[i][j].equals(Mark.EMPTY)) {
-
-                        tempBoard.play(new Move(i, j), joueur);
-                        int score = MiniMaxAlphaBeta(tempBoard, adversaire, Math.max(alphaT, alpha), beta);
-                        alphaT = Math.max(alphaT, score);
-                        if (alphaT >= beta) {
-                            return alphaT;
-                        }
-                    }
+                if (alphaT >= beta) {
+                    board.undo(move);
+                    return alphaT;
                 }
 
+                board.undo(move);
             }
+
             return alphaT;
-        }
-        else if(joueur.equals(adversaire)){
+        } else if (player == this.min) {
             int betaT = Integer.MAX_VALUE;
 
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
+            for (Move move : possibleMoves) {
+                board.play(move, player);
+                int score = alphaBeta(board, this.max, alpha, Math.min(betaT, beta));
+                betaT = Math.min(betaT, score);
 
-                    Board tempBoard = board.clone();
-                    if (tempBoard.getBoard()[i][j].equals(Mark.EMPTY)) {
-
-                        tempBoard.play(new Move(i,j), joueur);
-                        int score = MiniMaxAlphaBeta(tempBoard, cpu, alpha, Math.min(betaT, beta));
-                        betaT = Math.min(betaT, score);
-                        if (betaT <= alpha){
-                            return betaT;
-                        }
-                    }
+                if (betaT <= alpha) {
+                    board.undo(move);
+                    return betaT;
                 }
 
+                board.undo(move);
             }
+
             return betaT;
         }
 
-        return 0;
+        return -1;
     }
 }

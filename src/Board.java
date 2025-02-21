@@ -5,18 +5,12 @@ import java.util.ArrayList;
 // Vous pouvez par contre ajouter d'autres méthodes (ça devrait 
 // être le cas)
 class Board {
-    private Mark[][] board;
 
-    int[][][] winningPositions = {
-            {{0, 0}, {0, 1}, {0, 2}},
-            {{1, 0}, {1, 1}, {1, 2}},
-            {{2, 0}, {2, 1}, {2, 2}},
-            {{0, 0}, {1, 0}, {2, 0}},
-            {{0, 1}, {1, 1}, {2, 1}},
-            {{0, 2}, {1, 2}, {2, 2}},
-            {{0, 0}, {1, 1}, {2, 2}},
-            {{0, 2}, {1, 1}, {2, 0}}
-    };
+    public static final int VICTOIRE = 100;
+    public static final int DEFAITE = -100;
+    public static final int NUL = 0;
+    public static final int CONTINUE = 1;
+    private Mark[][] board;
 
     private int COLUMN = 3;
     private int ROW = 3;
@@ -55,10 +49,7 @@ class Board {
     }
 
     public void undo(Move m) {
-        int row = m.getRow();
-        int col = m.getCol();
-
-        board[row][col] = Mark.EMPTY;
+        board[m.getRow()][m.getCol()] = Mark.EMPTY;
     }
 
 
@@ -67,91 +58,69 @@ class Board {
     //           0   pour un match nul
     // Ne pas changer la signature de cette méthode
     public int evaluate(Mark mark) {
+        Mark opponent = (mark == Mark.X) ? Mark.O : Mark.X;
 
-        Mark adversaire = mark.equals(Mark.X) ? Mark.O : Mark.X;
-
-        int score = 0;
-
-        // Verifier victoire pour les lignes
-        for (Mark[] row : board) {
-
-            // Verifie pour le joueur
-            if (rowWin(row, mark)) {
-                return 100;
-            }
-
-            // Verifie pour l'adversaire
-            if (rowWin(row, adversaire)) {
-                return -100;
-            }
-        }
-
-        // Verifier victoire pour les colonnes
         for (int i = 0; i < 3; i++) {
-            Mark[] column = { board[0][i], board[1][i], board[2][i] };
-
-            // Verifie pour le joueur
-            if (rowWin(column, mark)) {
-                return 100;
+            if (board[i][0] == mark && board[i][1] == mark && board[i][2] == mark) {
+                return VICTOIRE;
             }
-
-            // Verifie pour l'adversaire
-            if (rowWin(column, adversaire)) {
-                return -100;
+            if (board[i][0] == opponent && board[i][1] == opponent && board[i][2] == opponent) {
+                return DEFAITE;
+            }
+            if (board[0][i] == mark && board[1][i] == mark && board[2][i] == mark) {
+                return VICTOIRE;
+            }
+            if (board[0][i] == opponent && board[1][i] == opponent && board[2][i] == opponent) {
+                return DEFAITE;
             }
         }
 
-        // Verifier victoire pour les diagonales
-        Mark[] diag1 = { board[0][0], board[1][1], board[2][2] };
-        Mark[] diag2 = { board[0][2], board[1][1], board[2][0] };
-
-        // Verifie pour le joueur
-        if (rowWin(diag1, mark) || rowWin(diag2, mark)) {
-            return 100;
+        if (board[0][0] == mark && board[1][1] == mark && board[2][2] == mark) {
+            return VICTOIRE;
         }
 
-        // Verifie pour l'adversaire
-        if (rowWin(diag1, adversaire) || rowWin(diag2, adversaire)) {
-            return -100;
+        if (board[0][2] == mark && board[1][1] == mark && board[2][0] == mark) {
+            return VICTOIRE;
         }
 
-        return score;
-
-    }
-
-    public boolean rowWin(Mark[] row, Mark player) {
-
-        boolean win = true;
-
-        for (Mark mark : row) {
-            if (!mark.equals(player))
-                return false;
+        if (board[0][0] == opponent && board[1][1] == opponent && board[2][2] == opponent) {
+            return DEFAITE;
         }
 
-        return win;
+        if (board[0][2] == opponent && board[1][1] == opponent && board[2][0] == opponent) {
+            return DEFAITE;
+        }
 
-    }
-
-    public Board clone() {
-        Board newBoard = new Board();
+        boolean isBoardFull = true;
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                newBoard.getBoard()[i][j] = board[i][j];
-            }
-        }
-        return newBoard;
-    }
-
-    public boolean full() {
-
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-
-                if (board[i][j].equals(Mark.EMPTY)) {
-                    return false;
+                if (board[i][j] == Mark.EMPTY) {
+                    isBoardFull = false;
+                    break;
                 }
             }
         }
-        return true;
+
+        if (isBoardFull) {
+            return NUL;
+        }
+
+        return CONTINUE; // Valeur arbitraire indiquant que la partie n'est pas encore finie
+    }
+
+    public Move[] getPossibleMoves() {
+        ArrayList<Move> moves = new ArrayList<Move>();
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (board[i][j] == Mark.EMPTY) {
+                    moves.add(new Move(i, j));
+                }
+            }
+        }
+
+        Move[] array = new Move[moves.size()];
+        array = moves.toArray(array);
+        return array;
     }
 }
