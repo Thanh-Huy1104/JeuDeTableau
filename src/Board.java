@@ -6,8 +6,8 @@ import java.util.ArrayList;
 // être le cas)
 class Board {
 
-    public static final int VICTOIRE = 100;
-    public static final int DEFAITE = -100;
+    public static final int VICTORY = 100;
+    public static final int DEFEAT = -100;
     public static final int NUL = 0;
     public static final int CONTINUE = 1;
     private Mark[][] board;
@@ -62,33 +62,33 @@ class Board {
 
         for (int i = 0; i < 3; i++) {
             if (board[i][0] == mark && board[i][1] == mark && board[i][2] == mark) {
-                return VICTOIRE;
+                return VICTORY;
             }
             if (board[i][0] == opponent && board[i][1] == opponent && board[i][2] == opponent) {
-                return DEFAITE;
+                return DEFEAT;
             }
             if (board[0][i] == mark && board[1][i] == mark && board[2][i] == mark) {
-                return VICTOIRE;
+                return VICTORY;
             }
             if (board[0][i] == opponent && board[1][i] == opponent && board[2][i] == opponent) {
-                return DEFAITE;
+                return DEFEAT;
             }
         }
 
         if (board[0][0] == mark && board[1][1] == mark && board[2][2] == mark) {
-            return VICTOIRE;
+            return VICTORY;
         }
 
         if (board[0][2] == mark && board[1][1] == mark && board[2][0] == mark) {
-            return VICTOIRE;
+            return VICTORY;
         }
 
         if (board[0][0] == opponent && board[1][1] == opponent && board[2][2] == opponent) {
-            return DEFAITE;
+            return DEFEAT;
         }
 
         if (board[0][2] == opponent && board[1][1] == opponent && board[2][0] == opponent) {
-            return DEFAITE;
+            return DEFEAT;
         }
 
         boolean isBoardFull = true;
