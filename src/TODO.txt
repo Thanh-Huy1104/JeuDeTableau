@@ -1,0 +1,5 @@
+- Modify the code and send it over to TA's
+- Change evaluate function to take in mind the complexity of the 81 cells
+- Include a depth limit in minimax and alphabeta
+- Add weights to certain moves / grids
+- Sort moves by best moves
