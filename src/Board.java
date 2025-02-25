@@ -8,7 +8,7 @@ class Board {
 
     public static final int VICTORY = 100;
     public static final int DEFEAT = -100;
-    public static final int NUL = 0;
+    public static final int STOP = 0;
     public static final int CONTINUE = 1;
     private Mark[][] board;
 
@@ -25,16 +25,16 @@ class Board {
         }
     }
 
+    public Board(Mark[][] board) {
+        this.board = board;
+    }
+
     public Mark[][] getBoard() {
         return board;
     }
 
     public Mark getMark(int row, int col) {
         return board[row][col];
-    }
-
-    public Board(Mark[][] board) {
-        this.board = board;
     }
 
     // Place la pièce 'mark' sur le plateau, à la
@@ -102,10 +102,10 @@ class Board {
         }
 
         if (isBoardFull) {
-            return NUL;
+            return STOP;
         }
 
-        return CONTINUE; // Valeur arbitraire indiquant que la partie n'est pas encore finie
+        return CONTINUE;
     }
 
     public Move[] getPossibleMoves() {

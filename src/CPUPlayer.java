@@ -19,7 +19,7 @@ class CPUPlayer {
     // joueur MAX (X ou O)
     public CPUPlayer(Mark cpu) {
         this.max = cpu;
-        this.min = cpu.equals(Mark.X) ? Mark.O: Mark.X;
+        this.min = cpu.equals(Mark.X) ? Mark.O : Mark.X;
     }
 
     // Ne pas changer cette méthode
@@ -90,7 +90,7 @@ class CPUPlayer {
             return minScore;
         }
 
-        return -1; // Il y a eu une erreur quelque part
+        return -1; // Il y a eu une erreur quelque part (add falloff)
     }
 
     // Retourne la liste des coups possibles.  Cette liste contient
@@ -131,39 +131,39 @@ class CPUPlayer {
         Move[] possibleMoves = board.getPossibleMoves();
 
         if (player == this.max) {
-            int alphaT = Integer.MIN_VALUE;
+            int alphaTemp = Integer.MIN_VALUE;
 
             for (Move move : possibleMoves) {
                 board.play(move, player);
-                int score = alphaBeta(board, this.min, Math.max(alphaT, alpha), beta);
-                alphaT = Math.max(alphaT, score);
+                int score = alphaBeta(board, this.min, Math.max(alphaTemp, alpha), beta);
+                alphaTemp = Math.max(alphaTemp, score);
 
-                if (alphaT >= beta) {
+                if (alphaTemp >= beta) {
                     board.undo(move);
-                    return alphaT;
+                    return alphaTemp;
                 }
 
                 board.undo(move);
             }
 
-            return alphaT;
+            return alphaTemp;
         } else if (player == this.min) {
-            int betaT = Integer.MAX_VALUE;
+            int betaTemp = Integer.MAX_VALUE;
 
             for (Move move : possibleMoves) {
                 board.play(move, player);
-                int score = alphaBeta(board, this.max, alpha, Math.min(betaT, beta));
-                betaT = Math.min(betaT, score);
+                int score = alphaBeta(board, this.max, alpha, Math.min(betaTemp, beta));
+                betaTemp = Math.min(betaTemp, score);
 
-                if (betaT <= alpha) {
+                if (betaTemp <= alpha) {
                     board.undo(move);
-                    return betaT;
+                    return betaTemp;
                 }
 
                 board.undo(move);
             }
 
-            return betaT;
+            return betaTemp;
         }
 
         return -1;
