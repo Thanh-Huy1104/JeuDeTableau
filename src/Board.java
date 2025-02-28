@@ -12,12 +12,12 @@ class Board {
     public static final int CONTINUE = 1;
     private Mark[][] board;
 
-    private int COLUMN = 3;
-    private int ROW = 3;
+    private int COLUMN = 9;
+    private int ROW = 9;
 
     // Ne pas changer la signature de cette méthode
     public Board() {
-        this.board = new Mark[3][3];
+        this.board = new Mark[9][9];
         for (int i = 0; i < COLUMN; i++) {
             for (int j = 0; j < ROW; j++) {
                 board[i][j] = Mark.EMPTY;
@@ -109,7 +109,7 @@ class Board {
     }
 
     public Move[] getPossibleMoves() {
-        ArrayList<Move> moves = new ArrayList<Move>();
+        ArrayList<Move> moves = new ArrayList<>();
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
