@@ -11,7 +11,7 @@ class Board {
     public static final int STOP = 0;
     public static final int CONTINUE = 1;
     private Mark[][] board;
-
+    private boolean[][] sectionFilled = new boolean[3][3];
     private int COLUMN = 9;
     private int ROW = 9;
 
@@ -21,6 +21,11 @@ class Board {
         for (int i = 0; i < COLUMN; i++) {
             for (int j = 0; j < ROW; j++) {
                 board[i][j] = Mark.EMPTY;
+            }
+        }
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                sectionFilled[i][j] = false;
             }
         }
     }
@@ -119,8 +124,45 @@ class Board {
             }
         }
 
+
         Move[] array = new Move[moves.size()];
         array = moves.toArray(array);
         return array;
+    }
+
+    public Move[] getPossibleMoves(Move move) {
+        ArrayList<Move> moves = new ArrayList<>();
+        int[] nextSector = getNextSector(move);
+
+        for (int i = nextSector[0]; i < nextSector[0] + 2; i++) {
+            for (int j = nextSector[1]; j < nextSector[1] + 2; j++) {
+                if (board[i][j] == Mark.EMPTY) {
+                    moves.add(new Move(i, j));
+                }
+            }
+        }
+
+        if (moves.isEmpty()) {
+            sectionFilled[move.getRow()][move.getCol()] = true;
+        }
+
+        // Go through all the sections that arent filled and add them as possible moves
+
+        Move[] array = new Move[moves.size()];
+        array = moves.toArray(array);
+        return array;
+    }
+
+    public static int[] getNextSector(Move m) {
+        int rowIndex = m.getRow();
+        int colIndex = m.getCol();
+
+        // Determine next sector's row start (1-3, 4-6, 7-9)
+        int nextSectorRow = (rowIndex % 3) * 3;
+
+        // Determine next sector's column start (A-C, D-F, G-I)
+        int nextSectorCol = (colIndex % 3) * 3;
+
+        return new int[]{nextSectorRow, nextSectorCol};
     }
 }
