@@ -44,18 +44,16 @@ class Client {
                         }
                     }
 
-                    System.out.println("Nouvelle partie! Vous jouer X, entrez votre premier coup : ");
-                    String move = null;
-                    move = console.readLine();
-                    Move clientMove = parseMove(move);
-                    output.write(move.getBytes(), 0, move.length());
+                    Move move = new Move(4,4);
+                    output.write(move.toString().getBytes(), 0, move.toString().length());
                     output.flush();
 
                     // Initiates new board and adds our own move
-                    clientBoard.play(clientMove, Mark.X);
+                    clientBoard.play(move, Mark.X);
                     currentMark = Mark.X;
                 }
                 // Debut de la partie en joueur O (Awaits)
+                // Nothing to add here
                 if (cmd == '2') {
                     System.out.println("Nouvelle partie! Vous jouer O, attendez le coup des X");
                     byte[] aBuffer = new byte[1024];
@@ -77,13 +75,14 @@ class Client {
                         }
                     }
 
-                    // Initiating the board and start as O
+                    // Start as O
                     currentMark = Mark.O;
                 }
 
 
                 // Le serveur demande le prochain coup
                 // Le message contient aussi le dernier coup joue.
+                // This is where the main code will be
                 if (cmd == '3') {
                     byte[] aBuffer = new byte[16];
 
@@ -98,48 +97,44 @@ class Client {
                         Move clientMove = parseMove(s);
                         clientBoard.play(clientMove, getOpponent(currentMark));
                         System.out.println(clientMove);
+                        CPUPlayer cpu = new CPUPlayer(currentMark);
+                        cpu.storeMove(clientMove);
+                        Move bestMove = cpu.getNextMoveAB(clientBoard).get(0);
+                        clientBoard.play(bestMove, currentMark);
+                        System.out.println(bestMove);
+                        output.write(bestMove.toString().getBytes(), 0, bestMove.toString().length());
+                        output.flush();
                     } catch (IllegalArgumentException e) {
                         System.out.println("Mouvement invalide: " + e.getMessage());
                     }
-                    // Evaluate with params of clientMove row and col
-                    // If board is already full then the choice is arbitrary
-                    // Move newMove = AlphaBeta
-                    System.out.println("Entrez votre coup : ");
-                    // Also update the board
-                    String move = null;
-                    move = console.readLine();
-
-                    // Client Play
-                    try {
-                        Move clientMove = parseMove(move);
-                        clientBoard.play(clientMove, currentMark);
-                        System.out.println(clientMove);
-                    } catch (IllegalArgumentException e) {
-                        System.out.println("Mouvement invalide: " + e.getMessage());
-                    }
-                    // move = newMove (but in bytes)
-                    output.write(move.getBytes(), 0, move.length());
-                    output.flush();
-
                 }
                 // Le dernier coup est invalide
                 if (cmd == '4') {
-                    System.out.println("Coup invalide, entrez un nouveau coup : ");
-                    // Redo steps for "3"
-                    String move = null;
-                    move = console.readLine();
+                    System.out.println("Coup invalide, recalcul en cours...");
 
-                    // Client Play
                     try {
-                        Move clientMove = parseMove(move);
-                        clientBoard.play(clientMove, currentMark);
-                        System.out.println(clientMove);
+                        CPUPlayer cpu = new CPUPlayer(currentMark);
+
+                        // 🔹 Remove the last move from history since it's invalid
+                        if (!cpu.isHistoryEmpty()) {
+                            Move invalidMove = cpu.undoMove();
+                            System.out.println("Retrait du coup invalide : " + invalidMove);
+                        }
+
+                        Move bestMove;
+                        do {
+                            bestMove = cpu.getNextMoveAB(clientBoard).get(0);  // Retry AI move
+                        } while (!isValidMove(bestMove));  // Keep trying if move is invalid
+
+                        clientBoard.play(bestMove, currentMark);
+                        cpu.storeMove(bestMove); // Store the valid move
+
+                        System.out.println("AI joue un nouveau coup : " + bestMove);
+                        output.write(bestMove.toString().getBytes(), 0, bestMove.toString().length());
+                        output.flush();
                     } catch (IllegalArgumentException e) {
                         System.out.println("Mouvement invalide: " + e.getMessage());
                     }
-                    output.write(move.getBytes(), 0, move.length());
-                    output.flush();
-
                 }
                 // La partie est terminée
                 if (cmd == '5') {
@@ -180,5 +175,9 @@ class Client {
 
     public static Mark getOpponent(Mark mark) {
         return mark == Mark.X ? Mark.O : Mark.X;
+    }
+
+    private static boolean isValidMove(Move move) {
+        return move != null && move.getRow() >= 0 && move.getRow() < 9 && move.getCol() >= 0 && move.getCol() < 9;
     }
 }

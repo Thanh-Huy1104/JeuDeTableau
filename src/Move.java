@@ -31,8 +31,12 @@ class Move
         col = c;
     }
 
-    public String toString(){
-        return "(" + row + ", " + col + ")";
+    @Override
+    public String toString() {
+        char colChar = (char) ('A' + col); // Convert column index (0-8) to 'A'-'I'
+        int rowNumber = row + 1; // Convert row index (0-8) to (1-9)
+
+        return colChar + Integer.toString(rowNumber);
     }
 
     @Override
