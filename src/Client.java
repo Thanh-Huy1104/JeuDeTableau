@@ -18,7 +18,7 @@ class Client {
     static char GAME_OVER = '5';
     static String MINIMAX = "minimax";
     static String ALPHA_BETA = "alphabeta";
-    static String Strategy = MINIMAX;
+    static String Strategy = ALPHA_BETA;
 
     public static void main(String[] args) {
         try {
@@ -53,7 +53,7 @@ class Client {
                 // La partie est terminée
                 if (cmd == GAME_OVER) {
                     String s = readMessage();
-                    System.out.println("Partie Terminé. Le dernier coup joué est: " + s);
+                    System.out.println("Partie Terminé. Le dernier coup joué est: " + s.substring(0, 3));
                     String move = null;
                     move = console.readLine();
                     output.write(move.getBytes(), 0, move.length());
@@ -107,7 +107,7 @@ class Client {
     private static void handleNextMove() throws IOException {
         //Reads the last move from the server
         String s = readMessage();
-        System.out.println("Dernier coup :" + s);
+        System.out.println("Dernier coup :" + s.substring(0, 3));
 
         Move opponentMove = parseMove(s);
         CPUBoard.play(opponentMove, getOpponent(currentMark));
