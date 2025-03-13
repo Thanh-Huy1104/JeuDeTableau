@@ -53,24 +53,90 @@ class Board {
     public int evaluate(Mark mark) {
         Mark opponent = (mark == Mark.X) ? Mark.O : Mark.X;
 
-
-        // Checks for global winner
+        // Check if the game is won/lost
         if (getMetaWinner() == mark) return VICTORY;
         if (getMetaWinner() == opponent) return DEFEAT;
 
         int score = 0;
 
-        // Reward sub-grid control
+        // Reward control over sub-grids
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 Mark subWinner = checkSubBoardWinner(i * 3, j * 3);
-                if (subWinner == mark) score += 20; // CPU controls a sub-grid
-                else if (subWinner == opponent) score -= 20; // Opponent controls a sub-grid
+                if (subWinner == mark) score += 50;  // CPU controls a sub-grid
+                else if (subWinner == opponent) score -= 50; // Opponent controls a sub-grid
+                else score += evaluateSubGrid(i * 3, j * 3, mark); // Evaluate potential
             }
         }
 
+        // Reward control over the meta-board (big tic-tac-toe)
+        score += evaluateMetaBoard(mark);
+
         return score;
     }
+
+    private int evaluateSubGrid(int row, int col, Mark mark) {
+        int score = 0;
+
+        for (int i = 0; i < 3; i++) {
+            // Check rows for potential
+            score += evaluateLine(new Mark[]{board[row + i][col], board[row + i][col + 1], board[row + i][col + 2]}, mark);
+            // Check columns for potential
+            score += evaluateLine(new Mark[]{board[row][col + i], board[row + 1][col + i], board[row + 2][col + i]}, mark);
+        }
+
+        // Check diagonals
+        score += evaluateLine(new Mark[]{board[row][col], board[row + 1][col + 1], board[row + 2][col + 2]}, mark);
+        score += evaluateLine(new Mark[]{board[row][col + 2], board[row + 1][col + 1], board[row + 2][col]}, mark);
+
+        return score;
+    }
+
+    private int evaluateLine(Mark[] line, Mark mark) {
+        int countMark = 0;
+        int countOpponent = 0;
+        Mark opponent = (mark == Mark.X) ? Mark.O : Mark.X;
+
+        for (Mark m : line) {
+            if (m == mark) countMark++;
+            else if (m == opponent) countOpponent++;
+        }
+
+        if (countMark == 2 && countOpponent == 0) return 30; // Two in a row, winning move
+        if (countMark == 1 && countOpponent == 0) return 10; // One in a row, setup move
+        if (countOpponent == 2 && countMark == 0) return -30; // Opponent two in a row, block required
+        if (countOpponent == 1 && countMark == 0) return -10; // Opponent has a mark, block potential
+
+        return 0; // Neutral case
+    }
+
+
+    private int evaluateMetaBoard(Mark mark) {
+        Mark[][] metaBoard = new Mark[3][3];
+
+        // Construct the meta-board (sub-grid winners)
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                metaBoard[i][j] = checkSubBoardWinner(i * 3, j * 3);
+            }
+        }
+
+        int score = 0;
+
+        // Reward control of the meta-board
+        for (int i = 0; i < 3; i++) {
+            score += evaluateLine(new Mark[]{metaBoard[i][0], metaBoard[i][1], metaBoard[i][2]}, mark);
+            score += evaluateLine(new Mark[]{metaBoard[0][i], metaBoard[1][i], metaBoard[2][i]}, mark);
+        }
+
+        // Check diagonals
+        score += evaluateLine(new Mark[]{metaBoard[0][0], metaBoard[1][1], metaBoard[2][2]}, mark);
+        score += evaluateLine(new Mark[]{metaBoard[0][2], metaBoard[1][1], metaBoard[2][0]}, mark);
+
+        return score;
+    }
+
+
 
     public Move[] getPossibleMoves(int lastRow, int lastCol) {
         ArrayList<Move> moves = new ArrayList<>();
