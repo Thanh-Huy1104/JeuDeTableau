@@ -33,68 +33,74 @@ class CPUPlayer {
     // Retourne la liste des coups possibles.  Cette liste contient
     // plusieurs coups possibles si et seuleument si plusieurs coups
     // ont le même score.
-//    public ArrayList<Move> getNextMoveMinMax(Board board) {
-//        numExploredNodes = 0;
-//        ArrayList<Move> bestMoves = new ArrayList<>();
-//        int bestScore = Integer.MIN_VALUE;
-//        Move[] possibleMoves = board.getPossibleMoves();
-//
-//        for (Move move : possibleMoves) {
-//            board.play(move, this.max);
-//            int score = minimax(board, this.min);
-//
-//            if (score > bestScore) {
-//                bestScore = score;
-//                bestMoves.clear();
-//                bestMoves.add(move);
-//            } else if (score == bestScore) {
-//                bestMoves.add(move);
-//            }
-//
-//            board.undo(move);
-//        }
-//
-//        return bestMoves;
-//    }
+    public ArrayList<Move> getNextMoveMinMax(Board board) {
+        numExploredNodes = 0;
+        ArrayList<Move> bestMoves = new ArrayList<>();
+        int bestScore = Integer.MIN_VALUE;
+        Move lastMove = moveHistory.isEmpty() ? new Move(4, 4) : moveHistory.peek();
+        Move[] possibleMoves = board.getPossibleMoves(lastMove.getRow(), lastMove.getCol());
+        int maxDepth = 2;
 
-//    public int minimax(Board board, Mark player) {
-//        numExploredNodes++;
-//        int evaluation = board.evaluate(this.max);
-//
-//        if (evaluation != Board.CONTINUE) {
-//            return evaluation;
-//        }
-//
-//        Move[] possibleMoves = board.getPossibleMoves();
-//
-//        if (player == this.max) {
-//            int maxScore = Integer.MIN_VALUE;
-//
-//            for (Move move : possibleMoves) {
-//                board.play(move, player);
-//                int score = minimax(board, this.min);
-//                maxScore = Math.max(maxScore, score);
-//
-//                board.undo(move);
-//            }
-//
-//            return maxScore;
-//        } else if (player == this.min) {
-//            int minScore = Integer.MAX_VALUE;
-//
-//            for (Move move : possibleMoves) {
-//                board.play(move, player);
-//                int score = minimax(board, this.max);
-//                minScore = Math.min(minScore, score);
-//
-//                board.undo(move);
-//            }
-//
-//            return minScore;
-//        }
-//
-//        return -1; // Il y a eu une erreur quelque part (add falloff)
-//    }
+        for (Move move : possibleMoves) {
+            board.play(move, this.max);
+            int score = minimax(board, this.min, 0, maxDepth);
+            board.undo(move);
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMoves.clear();
+                bestMoves.add(move);
+            } else if (score == bestScore) {
+                bestMoves.add(move);
+            }
+        }
+
+        if (!bestMoves.isEmpty()) {
+            moveHistory.push(bestMoves.get(0));
+        }
+        return bestMoves;
+    }
+
+    public int minimax(Board board, Mark player, int depth, int maxDepth) {
+        numExploredNodes++;
+
+        // Stop searching if we reach max depth
+        if (depth >= maxDepth) {
+            return board.evaluate(this.max); // Use heuristic evaluation at max depth
+        }
+
+        int evaluation = board.evaluate(this.max);
+        if (evaluation == Board.VICTORY || evaluation == Board.DEFEAT) {
+            return evaluation;
+        }
+
+        Move lastMove = moveHistory.isEmpty() ? new Move(4, 4) : moveHistory.peek();
+        Move[] possibleMoves = board.getPossibleMoves(lastMove.getRow(), lastMove.getCol());
+
+        if (player == this.max) {
+            int bestScore = Integer.MIN_VALUE;
+
+            for (Move move : possibleMoves) {
+                board.play(move, player);
+                int score = minimax(board, this.min, depth + 1, maxDepth);
+                board.undo(move);
+
+                bestScore = Math.max(bestScore, score);
+            }
+            return bestScore;
+        } else {
+            int bestScore = Integer.MAX_VALUE;
+
+            for (Move move : possibleMoves) {
+                board.play(move, player);
+                int score = minimax(board, this.max, depth + 1, maxDepth);
+                board.undo(move);
+
+                bestScore = Math.min(bestScore, score);
+            }
+            return bestScore;
+        }
+    }
 
     // Retourne la liste des coups possibles.  Cette liste contient
     // plusieurs coups possibles si et seuleument si plusieurs coups
@@ -105,7 +111,7 @@ class CPUPlayer {
         int bestScore = Integer.MIN_VALUE;
         Move lastMove = moveHistory.isEmpty() ? new Move(4, 4) : moveHistory.peek();
         Move[] possibleMoves = board.getPossibleMoves(lastMove.getRow(), lastMove.getCol());
-        int maxDepth = 10;
+        int maxDepth = 3;
         for (Move move : possibleMoves) {
             board.play(move, this.max);
             int score = alphaBeta(board, this.min, Integer.MIN_VALUE, Integer.MAX_VALUE, move.getRow(), move.getCol(), 0, maxDepth);
@@ -123,10 +129,6 @@ class CPUPlayer {
             moveHistory.push(bestMoves.get(0));
         }
         return bestMoves;
-    }
-
-    public Move getLastMove() {
-        return moveHistory.isEmpty() ? null : moveHistory.peek();
     }
 
     public Move undoMove() {

@@ -74,7 +74,6 @@ class Board {
 
     public Move[] getPossibleMoves(int lastRow, int lastCol) {
         ArrayList<Move> moves = new ArrayList<>();
-
         int subRow = (lastRow % 3) * 3;
         int subCol = (lastCol % 3) * 3;
 
