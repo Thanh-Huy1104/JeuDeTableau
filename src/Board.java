@@ -53,27 +53,39 @@ class Board {
     public int evaluate(Mark mark) {
         Mark opponent = (mark == Mark.X) ? Mark.O : Mark.X;
 
-        // Check if the game is won/lost
         if (getMetaWinner() == mark) return VICTORY;
         if (getMetaWinner() == opponent) return DEFEAT;
 
         int score = 0;
 
-        // Reward control over sub-grids
+        // Strongly value control of the center meta-grid
+        Mark centerSubWinner = checkSubBoardWinner(3, 3);
+        if (centerSubWinner == mark) score += 100;
+        else if (centerSubWinner == opponent) score -= 100;
+
+        // Evaluate all 3x3 sub-grids
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                Mark subWinner = checkSubBoardWinner(i * 3, j * 3);
-                if (subWinner == mark) score += 50;  // CPU controls a sub-grid
-                else if (subWinner == opponent) score -= 50; // Opponent controls a sub-grid
-                else score += evaluateSubGrid(i * 3, j * 3, mark); // Evaluate potential
+                int subScore = evaluateSubGrid(i * 3, j * 3, mark);
+                score += subScore;
+
+                Mark winner = checkSubBoardWinner(i * 3, j * 3);
+                if (winner == mark) score += 60;
+                else if (winner == opponent) score -= 60;
+
+                // Bonus for controlling the center cell of sub-grid
+                Mark center = board[i * 3 + 1][j * 3 + 1];
+                if (center == mark) score += 10;
+                else if (center == opponent) score -= 10;
             }
         }
 
-        // Reward control over the meta-board (big tic-tac-toe)
-        score += evaluateMetaBoard(mark);
+        // Evaluate potential macro-board control
+        score += 2 * evaluateMetaBoard(mark);
 
         return score;
     }
+
 
     private int evaluateSubGrid(int row, int col, Mark mark) {
         int score = 0;
@@ -102,13 +114,16 @@ class Board {
             else if (m == opponent) countOpponent++;
         }
 
-        if (countMark == 2 && countOpponent == 0) return 30; // Two in a row, winning move
-        if (countMark == 1 && countOpponent == 0) return 10; // One in a row, setup move
-        if (countOpponent == 2 && countMark == 0) return -30; // Opponent two in a row, block required
-        if (countOpponent == 1 && countMark == 0) return -10; // Opponent has a mark, block potential
+        // Line Scoring
+        if (countMark == 3) return 100; // winning line
+        if (countMark == 2 && countOpponent == 0) return 40;
+        if (countMark == 1 && countOpponent == 0) return 10;
+        if (countOpponent == 2 && countMark == 0) return -35;
+        if (countOpponent == 1 && countMark == 0) return -10;
 
-        return 0; // Neutral case
+        return 0;
     }
+
 
 
     private int evaluateMetaBoard(Mark mark) {

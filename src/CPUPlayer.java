@@ -105,16 +105,20 @@ class CPUPlayer {
     // Retourne la liste des coups possibles.  Cette liste contient
     // plusieurs coups possibles si et seuleument si plusieurs coups
     // ont le même score.
+    // Inside CPUPlayer.java
+
     public ArrayList<Move> getNextMoveAB(Board board) {
         numExploredNodes = 0;
         ArrayList<Move> bestMoves = new ArrayList<>();
         int bestScore = Integer.MIN_VALUE;
         Move lastMove = moveHistory.isEmpty() ? new Move(4, 4) : moveHistory.peek();
         Move[] possibleMoves = board.getPossibleMoves(lastMove.getRow(), lastMove.getCol());
-        int maxDepth = 3;
+
+        int maxDepth = 7; // Depth can be tuned depending on performance
+
         for (Move move : possibleMoves) {
             board.play(move, this.max);
-            int score = alphaBeta(board, this.min, Integer.MIN_VALUE, Integer.MAX_VALUE, move.getRow(), move.getCol(), 0, maxDepth);
+            int score = alphaBeta(board, this.min, Integer.MIN_VALUE, Integer.MAX_VALUE, move.getRow(), move.getCol(), 1, maxDepth);
             board.undo(move);
 
             if (score > bestScore) {
@@ -125,30 +129,20 @@ class CPUPlayer {
                 bestMoves.add(move);
             }
         }
-        if (bestMoves.get(0) != null) {
+
+        if (!bestMoves.isEmpty()) {
             moveHistory.push(bestMoves.get(0));
         }
+
         return bestMoves;
     }
 
-    public Move undoMove() {
-        return moveHistory.pop();
-    }
-
-    public void storeMove(Move move) {
-        moveHistory.push(move);
-    }
-
-    public boolean isHistoryEmpty() {
-        return moveHistory.isEmpty();
-    }
-
+    // Alpha-Beta with heuristic evaluation and pruning
     public int alphaBeta(Board board, Mark player, int alpha, int beta, int lastRow, int lastCol, int depth, int maxDepth) {
         numExploredNodes++;
 
-        // Stop searching if we reach max depth
         if (depth >= maxDepth) {
-            return board.evaluate(this.max);  // Use heuristic evaluation at max depth
+            return board.evaluate(this.max); // heuristic evaluation
         }
 
         int evaluation = board.evaluate(this.max);
@@ -169,9 +163,7 @@ class CPUPlayer {
                 bestValue = Math.max(bestValue, score);
                 alpha = Math.max(alpha, bestValue);
 
-                if (alpha >= beta) {
-                    break; // Beta cutoff
-                }
+                if (alpha >= beta) break; // Beta cutoff
             }
             return bestValue;
         } else {
@@ -185,11 +177,72 @@ class CPUPlayer {
                 bestValue = Math.min(bestValue, score);
                 beta = Math.min(beta, bestValue);
 
-                if (beta <= alpha) {
-                    break;
-                }
+                if (beta <= alpha) break; // Alpha cutoff
             }
             return bestValue;
         }
     }
+
+
+    public Move undoMove() {
+        return moveHistory.pop();
+    }
+
+    public void storeMove(Move move) {
+        moveHistory.push(move);
+    }
+
+    public boolean isHistoryEmpty() {
+        return moveHistory.isEmpty();
+    }
+
+//    public int alphaBeta(Board board, Mark player, int alpha, int beta, int lastRow, int lastCol, int depth, int maxDepth) {
+//        numExploredNodes++;
+//
+//        // Stop searching if we reach max depth
+//        if (depth >= maxDepth) {
+//            return board.evaluate(this.max);  // Use heuristic evaluation at max depth
+//        }
+//
+//        int evaluation = board.evaluate(this.max);
+//        if (evaluation == Board.VICTORY || evaluation == Board.DEFEAT) {
+//            return evaluation;
+//        }
+//
+//        Move[] possibleMoves = board.getPossibleMoves(lastRow, lastCol);
+//
+//        if (player == this.max) {
+//            int bestValue = Integer.MIN_VALUE;
+//
+//            for (Move move : possibleMoves) {
+//                board.play(move, player);
+//                int score = alphaBeta(board, this.min, alpha, beta, move.getRow(), move.getCol(), depth + 1, maxDepth);
+//                board.undo(move);
+//
+//                bestValue = Math.max(bestValue, score);
+//                alpha = Math.max(alpha, bestValue);
+//
+//                if (alpha >= beta) {
+//                    break; // Beta cutoff
+//                }
+//            }
+//            return bestValue;
+//        } else {
+//            int bestValue = Integer.MAX_VALUE;
+//
+//            for (Move move : possibleMoves) {
+//                board.play(move, player);
+//                int score = alphaBeta(board, this.max, alpha, beta, move.getRow(), move.getCol(), depth + 1, maxDepth);
+//                board.undo(move);
+//
+//                bestValue = Math.min(bestValue, score);
+//                beta = Math.min(beta, bestValue);
+//
+//                if (beta <= alpha) {
+//                    break;
+//                }
+//            }
+//            return bestValue;
+//        }
+//    }
 }
