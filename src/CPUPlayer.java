@@ -1,248 +1,141 @@
 import java.util.ArrayList;
-import java.util.Stack;
+import java.util.Random;
 
-// IMPORTANT: Il ne faut pas changer la signature des méthodes
-// de cette classe, ni le nom de la classe.
-// Vous pouvez par contre ajouter d'autres méthodes (ça devrait
-// être le cas)
 class CPUPlayer {
-
-    // Contient le nombre de noeuds visités (le nombre
-    // d'appel à la fonction MinMax ou Alpha Beta)
-    // Normalement, la variable devrait être incrémentée
-    // au début de votre MinMax ou Alpha Beta.
+    private Mark cpu;
     private int numExploredNodes;
+    private Random random;
 
-    private Mark max;
-    private Mark min;
-    private Stack<Move> moveHistory;
-
-    // Le constructeur reçoit en paramètre le
-    // joueur MAX (X ou O)
     public CPUPlayer(Mark cpu) {
-        this.max = cpu;
-        this.min = cpu.equals(Mark.X) ? Mark.O : Mark.X;
-        this.moveHistory = new Stack<>();
+        this.cpu = cpu;
+        this.numExploredNodes = 0;
+        this.random = new Random();
     }
 
-    // Ne pas changer cette méthode
     public int getNumOfExploredNodes() {
         return numExploredNodes;
     }
 
-    // Retourne la liste des coups possibles.  Cette liste contient
-    // plusieurs coups possibles si et seuleument si plusieurs coups
-    // ont le même score.
-    public ArrayList<Move> getNextMoveMinMax(Board board) {
-        numExploredNodes = 0;
-        ArrayList<Move> bestMoves = new ArrayList<>();
-        int bestScore = Integer.MIN_VALUE;
-        Move lastMove = moveHistory.isEmpty() ? new Move(4, 4) : moveHistory.peek();
-        Move[] possibleMoves = board.getPossibleMoves(lastMove.getRow(), lastMove.getCol());
-        int maxDepth = 2;
-
-        for (Move move : possibleMoves) {
-            board.play(move, this.max);
-            int score = minimax(board, this.min, 0, maxDepth);
-            board.undo(move);
-
-            if (score > bestScore) {
-                bestScore = score;
-                bestMoves.clear();
-                bestMoves.add(move);
-            } else if (score == bestScore) {
-                bestMoves.add(move);
-            }
-        }
-
-        if (!bestMoves.isEmpty()) {
-            moveHistory.push(bestMoves.get(0));
-        }
-        return bestMoves;
-    }
-
-    public int minimax(Board board, Mark player, int depth, int maxDepth) {
+    private int minimax(Board board, int depth, boolean isMax, long startTime) {
         numExploredNodes++;
 
-        // Stop searching if we reach max depth
-        if (depth >= maxDepth) {
-            return board.evaluate(this.max); // Use heuristic evaluation at max depth
+        //
+        if (depth == 0 || board.checkSubGridMoves().isEmpty() || (System.currentTimeMillis() - startTime) > 2500) {
+            return board.evaluate(cpu);
         }
 
-        int evaluation = board.evaluate(this.max);
-        if (evaluation == Board.VICTORY || evaluation == Board.DEFEAT) {
-            return evaluation;
-        }
-
-        Move lastMove = moveHistory.isEmpty() ? new Move(4, 4) : moveHistory.peek();
-        Move[] possibleMoves = board.getPossibleMoves(lastMove.getRow(), lastMove.getCol());
-
-        if (player == this.max) {
-            int bestScore = Integer.MIN_VALUE;
-
-            for (Move move : possibleMoves) {
-                board.play(move, player);
-                int score = minimax(board, this.min, depth + 1, maxDepth);
-                board.undo(move);
-
-                bestScore = Math.max(bestScore, score);
-            }
-            return bestScore;
-        } else {
-            int bestScore = Integer.MAX_VALUE;
-
-            for (Move move : possibleMoves) {
-                board.play(move, player);
-                int score = minimax(board, this.max, depth + 1, maxDepth);
-                board.undo(move);
-
-                bestScore = Math.min(bestScore, score);
-            }
-            return bestScore;
-        }
-    }
-
-    // Retourne la liste des coups possibles.  Cette liste contient
-    // plusieurs coups possibles si et seuleument si plusieurs coups
-    // ont le même score.
-    // Inside CPUPlayer.java
-
-    public ArrayList<Move> getNextMoveAB(Board board) {
-        numExploredNodes = 0;
-        ArrayList<Move> bestMoves = new ArrayList<>();
-        int bestScore = Integer.MIN_VALUE;
-        Move lastMove = moveHistory.isEmpty() ? new Move(4, 4) : moveHistory.peek();
-        Move[] possibleMoves = board.getPossibleMoves(lastMove.getRow(), lastMove.getCol());
-
-        int maxDepth = 7; // Depth can be tuned depending on performance
-
-        for (Move move : possibleMoves) {
-            board.play(move, this.max);
-            int score = alphaBeta(board, this.min, Integer.MIN_VALUE, Integer.MAX_VALUE, move.getRow(), move.getCol(), 1, maxDepth);
-            board.undo(move);
-
-            if (score > bestScore) {
-                bestScore = score;
-                bestMoves.clear();
-                bestMoves.add(move);
-            } else if (score == bestScore) {
-                bestMoves.add(move);
-            }
-        }
-
-        if (!bestMoves.isEmpty()) {
-            moveHistory.push(bestMoves.get(0));
-        }
-
-        return bestMoves;
-    }
-
-    // Alpha-Beta with heuristic evaluation and pruning
-    public int alphaBeta(Board board, Mark player, int alpha, int beta, int lastRow, int lastCol, int depth, int maxDepth) {
-        numExploredNodes++;
-
-        if (depth >= maxDepth) {
-            return board.evaluate(this.max); // heuristic evaluation
-        }
-
-        int evaluation = board.evaluate(this.max);
-        if (evaluation == Board.VICTORY || evaluation == Board.DEFEAT) {
-            return evaluation;
-        }
-
-        Move[] possibleMoves = board.getPossibleMoves(lastRow, lastCol);
-
-        if (player == this.max) {
+        if (isMax) {
             int bestValue = Integer.MIN_VALUE;
-
-            for (Move move : possibleMoves) {
-                board.play(move, player);
-                int score = alphaBeta(board, this.min, alpha, beta, move.getRow(), move.getCol(), depth + 1, maxDepth);
+            for (Move move : board.checkSubGridMoves()) {
+                board.play(move, cpu);
+                int value = minimax(board, depth - 1, false, startTime);
                 board.undo(move);
-
-                bestValue = Math.max(bestValue, score);
-                alpha = Math.max(alpha, bestValue);
-
-                if (alpha >= beta) break; // Beta cutoff
+                bestValue = Math.max(bestValue, value);
             }
             return bestValue;
         } else {
             int bestValue = Integer.MAX_VALUE;
-
-            for (Move move : possibleMoves) {
-                board.play(move, player);
-                int score = alphaBeta(board, this.max, alpha, beta, move.getRow(), move.getCol(), depth + 1, maxDepth);
+            Mark opponent = getOpponentMark();
+            for (Move move : board.checkSubGridMoves()) {
+                board.play(move, opponent);
+                int value = minimax(board, depth - 1, true, startTime);
                 board.undo(move);
-
-                bestValue = Math.min(bestValue, score);
-                beta = Math.min(beta, bestValue);
-
-                if (beta <= alpha) break; // Alpha cutoff
+                bestValue = Math.min(bestValue, value);
             }
             return bestValue;
         }
     }
 
 
-    public Move undoMove() {
-        return moveHistory.pop();
+    private int alphaBeta(Board board, int depth, int alpha, int beta, boolean isMax, long startTime) {
+        numExploredNodes++;
+        if (depth == 0 || board.checkSubGridMoves().isEmpty() || (System.currentTimeMillis() - startTime) > 2500) {
+            return board.evaluate(cpu);
+        }
+
+        if (isMax) {
+            int bestValue = Integer.MIN_VALUE;
+            for (Move move : board.checkSubGridMoves()) {
+                board.play(move, cpu);
+                bestValue = Math.max(bestValue, alphaBeta(board, depth - 1, alpha, beta, false, startTime));
+                board.undo(move);
+                alpha = Math.max(alpha, bestValue);
+                if (beta <= alpha) break;
+            }
+            return bestValue;
+        } else {
+            int bestValue = Integer.MAX_VALUE;
+            Mark opponent = (cpu == Mark.X) ? Mark.O : Mark.X;
+            for (Move move : board.checkSubGridMoves()) {
+                board.play(move, opponent);
+                bestValue = Math.min(bestValue, alphaBeta(board, depth - 1, alpha, beta, true, startTime));
+                board.undo(move);
+                beta = Math.min(beta, bestValue);
+                if (beta <= alpha) break;
+            }
+            return bestValue;
+        }
     }
 
-    public void storeMove(Move move) {
-        moveHistory.push(move);
+    public Move getBestLocalMove(Board board, int maxDepth) {
+        ArrayList<Move> validMoves = board.checkSubGridMoves();
+        if (validMoves.isEmpty()) {
+            System.out.println("⚠ Aucune case valide trouvée, IA joue un coup aléatoire !");
+            return getFirstValidMove(board);
+        }
+
+        int bestScore = Integer.MIN_VALUE;
+        Move bestMove = null;
+        long startTime = System.currentTimeMillis();
+        numExploredNodes = 0;
+
+        // Inside getBestLocalMove (before the minimax loop)
+        for (Move move : validMoves) {
+            board.play(move, cpu);
+            if (board.checkSubBoardWinner(move.getRow() / 3, move.getCol() / 3) == cpu ||
+                    board.evaluate(cpu) == Integer.MAX_VALUE) {
+                board.undo(move);
+                return move; // Winning move found
+            }
+            board.undo(move);
+        }
+
+
+        // Explore each valid move and select the best one
+        for (Move move : validMoves) {
+            board.play(move, cpu);
+            int score = alphaBeta(board, maxDepth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false, startTime);
+            board.undo(move);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
+            }
+        }
+
+        if (bestMove == null) {
+            System.out.println("⚠ ERREUR: Aucun coup MinMax valide, choix aléatoire");
+            return getFirstValidMove(board);
+        }
+
+        // Log the move and display the board
+        System.out.println("IA (" + cpu + ") joue : " + bestMove + " (Score: " + bestScore + ", Noeuds explorés: " + numExploredNodes + ")");
+        board.play(bestMove, cpu);
+        board.display();
+        board.undo(bestMove);
+
+        return bestMove;
     }
 
-    public boolean isHistoryEmpty() {
-        return moveHistory.isEmpty();
+    public Move getFirstValidMove(Board board) {
+        ArrayList<Move> moves = board.checkSubGridMoves();
+        return moves.get(random.nextInt(moves.size()));
     }
 
-//    public int alphaBeta(Board board, Mark player, int alpha, int beta, int lastRow, int lastCol, int depth, int maxDepth) {
-//        numExploredNodes++;
-//
-//        // Stop searching if we reach max depth
-//        if (depth >= maxDepth) {
-//            return board.evaluate(this.max);  // Use heuristic evaluation at max depth
-//        }
-//
-//        int evaluation = board.evaluate(this.max);
-//        if (evaluation == Board.VICTORY || evaluation == Board.DEFEAT) {
-//            return evaluation;
-//        }
-//
-//        Move[] possibleMoves = board.getPossibleMoves(lastRow, lastCol);
-//
-//        if (player == this.max) {
-//            int bestValue = Integer.MIN_VALUE;
-//
-//            for (Move move : possibleMoves) {
-//                board.play(move, player);
-//                int score = alphaBeta(board, this.min, alpha, beta, move.getRow(), move.getCol(), depth + 1, maxDepth);
-//                board.undo(move);
-//
-//                bestValue = Math.max(bestValue, score);
-//                alpha = Math.max(alpha, bestValue);
-//
-//                if (alpha >= beta) {
-//                    break; // Beta cutoff
-//                }
-//            }
-//            return bestValue;
-//        } else {
-//            int bestValue = Integer.MAX_VALUE;
-//
-//            for (Move move : possibleMoves) {
-//                board.play(move, player);
-//                int score = alphaBeta(board, this.max, alpha, beta, move.getRow(), move.getCol(), depth + 1, maxDepth);
-//                board.undo(move);
-//
-//                bestValue = Math.min(bestValue, score);
-//                beta = Math.min(beta, bestValue);
-//
-//                if (beta <= alpha) {
-//                    break;
-//                }
-//            }
-//            return bestValue;
-//        }
-//    }
+    public Mark getOpponentMark() {
+        return cpu == Mark.X ? Mark.O : Mark.X;
+    }
+
+    public Mark getMark() {
+        return cpu;
+    }
 }
