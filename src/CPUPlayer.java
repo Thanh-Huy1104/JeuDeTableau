@@ -89,16 +89,7 @@ class CPUPlayer {
         long startTime = System.currentTimeMillis();
         numExploredNodes = 0;
 
-        // Inside getBestLocalMove (before the minimax loop)
-        for (Move move : validMoves) {
-            board.play(move, cpu);
-            if (board.checkSubBoardWinner(move.getRow() / 3, move.getCol() / 3) == cpu ||
-                    board.evaluate(cpu) == Integer.MAX_VALUE) {
-                board.undo(move);
-                return move; // Winning move found
-            }
-            board.undo(move);
-        }
+
 
 
         // Explore each valid move and select the best one
