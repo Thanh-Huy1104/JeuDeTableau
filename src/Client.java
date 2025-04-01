@@ -32,7 +32,6 @@ class Client {
                     String s = new String(buffer).trim();
                     System.out.println("Plateau initial: " + s);
                     board.init(s);
-                    board.display();
 
                     Move firstMove = cpu.getBestLocalMove(board, 7);
                     board.play(firstMove, cpu.getMark());
@@ -40,7 +39,6 @@ class Client {
                     output.write(moveString.getBytes(), 0, moveString.length());
                     output.flush();
                     System.out.println("Premier coup joué: " + moveString);
-                    board.display();
                 }
 
                 if (cmd == NEXT_MOVE) {
@@ -53,7 +51,6 @@ class Client {
                     if (!lastMove.equals("A0")) {
                         Move move = parseMove(lastMove);
                         board.play(move, cpu.getOpponentMark());
-                        board.display();
                     }
 
                     Move nextMove = cpu.getBestLocalMove(board, 7); // Depth 7 for strength

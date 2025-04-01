@@ -111,7 +111,6 @@ class CPUPlayer {
         // Log the move and display the board
         System.out.println("IA (" + cpu + ") joue : " + bestMove + " (Score: " + bestScore + ", Noeuds explorés: " + numExploredNodes + ")");
         board.play(bestMove, cpu);
-        board.display();
         board.undo(bestMove);
 
         return bestMove;

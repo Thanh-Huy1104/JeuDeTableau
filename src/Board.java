@@ -135,22 +135,64 @@ class Board {
             if (colMark == 2 && colOpp == 0) score += 500;
             if (rowOpp == 2 && rowMark == 0) score -= 500; // Opponent has two
             if (colOpp == 2 && colMark == 0) score -= 500;
-        }
-        return score;
-    }
 
-    public void display() {
-        System.out.println("Game state:");
-        for (int i = 0; i < SIZE; i++) {
-            if (i % 3 == 0 && i != 0) System.out.println("------+------+------");
-            for (int j = 0; j < SIZE; j++) {
-                if (j % 3 == 0 && j != 0) System.out.print("| ");
-                System.out.print(board[i][j] == Mark.EMPTY ? "-" : board[i][j]);
-                System.out.print(" ");
+            if (rowMark == 2 && rowOpp == 0) {
+                // Two local boards already won
+                score += 500;
+            } else if (rowMark == 1 && rowOpp == 0) {
+                // Only one local board in row i, but no opponent boards there
+                score += 200;
+            } else if (rowOpp == 2 && rowMark == 0) {
+                score -= 500;
+            } else if (rowOpp == 1 && rowMark == 0) {
+                score -= 200;
             }
-            System.out.println();
+
+
+            // Column
+            if (colMark == 2 && colOpp == 0) {
+                score += 500;
+            } else if (colMark == 1 && colOpp == 0) {
+                score += 200;
+            } else if (colOpp == 2 && colMark == 0) {
+                score -= 500;
+            } else if (colOpp == 1 && colMark == 0) {
+                score -= 200;
+            }
         }
-        System.out.println();
+        int diag1Mark = 0, diag1Opp = 0;
+        int diag2Mark = 0, diag2Opp = 0;
+        for (int i = 0; i < 3; i++) {
+            // Main diagonal: (0,0), (1,1), (2,2)
+            if (metaBoard[i][i] == mark) diag1Mark++;
+            else if (metaBoard[i][i] == opponent) diag1Opp++;
+
+            // Anti-diagonal: (0,2), (1,1), (2,0)
+            if (metaBoard[i][2 - i] == mark) diag2Mark++;
+            else if (metaBoard[i][2 - i] == opponent) diag2Opp++;
+        }
+
+        if (diag1Mark == 2 && diag1Opp == 0) {
+            score += 500;
+        } else if (diag1Mark == 1 && diag1Opp == 0) {
+            score += 200;
+        } else if (diag1Opp == 2 && diag1Mark == 0) {
+            score -= 500;
+        } else if (diag1Opp == 1 && diag1Mark == 0) {
+            score -= 200;
+        }
+
+        if (diag2Mark == 2 && diag2Opp == 0) {
+            score += 500;
+        } else if (diag2Mark == 1 && diag2Opp == 0) {
+            score += 200;
+        } else if (diag2Opp == 2 && diag2Mark == 0) {
+            score -= 500;
+        } else if (diag2Opp == 1 && diag2Mark == 0) {
+            score -= 200;
+        }
+
+        return score;
     }
 
     public void init(String serverData) {
