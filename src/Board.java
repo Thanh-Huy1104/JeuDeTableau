@@ -17,17 +17,36 @@ class Board {
         }
     }
 
-    public void play(Move m, Mark mark) {
-        if (board[m.getRow()][m.getCol()] == Mark.EMPTY) {
-            board[m.getRow()][m.getCol()] = mark;
-            lastRow = m.getRow();
-            lastCol = m.getCol();
-        }
-    }
+// Dans la classe Board, ajoutez une structure pour sauvegarder l'état
+private ArrayList<int[]> lastMoves = new ArrayList<>();
 
-    public void undo(Move m) {
-        board[m.getRow()][m.getCol()] = Mark.EMPTY;
+public void play(Move m, Mark mark) {
+    if (board[m.getRow()][m.getCol()] == Mark.EMPTY) {
+        // Sauvegarder l'état courant
+        lastMoves.add(new int[]{lastRow, lastCol});
+        board[m.getRow()][m.getCol()] = mark;
+        lastRow = m.getRow();
+        lastCol = m.getCol();
     }
+}
+
+public void undo(Move m) {
+    // Enlever la marque sur le plateau
+    board[m.getRow()][m.getCol()] = Mark.EMPTY;
+
+    // Récupérer l'état précédent de lastRow/lastCol
+    if (!lastMoves.isEmpty()) {
+        int[] previousState = lastMoves.remove(lastMoves.size() - 1);
+        lastRow = previousState[0];
+        lastCol = previousState[1];
+    } else {
+        // Si plus rien dans la pile, on réinitialise
+        lastRow = -1;
+        lastCol = -1;
+    }
+}
+
+
 
     public int evaluate(Mark mark) {
         int score = 0;
@@ -39,7 +58,7 @@ class Board {
                 Mark winner = checkSubBoardWinner(i, j);
                 metaBoard[i / 3][j / 3] = winner;
                 if (winner == mark) score += VICTORY;
-                else if (winner == opponent) score -= DEFEAT;
+                else if (winner == opponent) score += DEFEAT;
                 score += evaluateSubBoard(i, j, mark);
             }
         }
@@ -197,13 +216,10 @@ class Board {
 
     public void init(String serverData) {
         String[] values = serverData.split(" ");
-        int x = 0, y = 0;
-        for (String val : values) {
-            board[x][y] = parseMark(Integer.parseInt(val));
-            x++;
-            if (x == SIZE) {
-                x = 0;
-                y++;
+        int index = 0;
+        for (int row = 0; row < SIZE; row++) {
+            for (int col = 0; col < SIZE; col++) {
+                board[row][col] = parseMark(Integer.parseInt(values[index++]));
             }
         }
     }
