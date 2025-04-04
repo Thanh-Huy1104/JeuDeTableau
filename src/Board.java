@@ -3,8 +3,8 @@ import java.util.ArrayList;
 class Board {
     private Mark[][] board;
     private final int SIZE = 9;
-    private int lastRow = -1;
-    private int lastCol = -1;
+    public int lastRow = -1;
+    public int lastCol = -1;
     public static final int VICTORY = 100;
     public static final int DEFEAT = -100;
 
@@ -41,6 +41,14 @@ class Board {
                 if (winner == mark) score += VICTORY;
                 else if (winner == opponent) score -= DEFEAT;
                 score += evaluateSubBoard(i, j, mark);
+
+                if (i == 3 && j == 3) { // Center board
+                    if (winner == mark) {
+                        score += 50; // Higher priority for winning the center board
+                    } else if (winner == opponent) {
+                        score -= 50; // Penalize if the opponent wins the center board
+                    }
+                }
             }
         }
 
@@ -49,8 +57,58 @@ class Board {
             return metaScore;
         }
         score += metaScore;
+        score += redirectOpponent(metaBoard, mark);
 
         return score;
+    }
+
+    private int redirectOpponent(Mark[][] localWinners, Mark mark) {
+        int score = 0;
+        Mark opponent = (mark == Mark.X) ? Mark.O : Mark.X;
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (localWinners[i][j] == Mark.EMPTY) {
+                    // Penalize sending the opponent to a board they can easily win
+                    if (canOpponentWin(i, j, opponent)) {
+                        score -= 50;
+                    }
+                }
+            }
+        }
+        return score;
+    }
+
+    private boolean canOpponentWin(int localRow, int localCol, Mark opponent) {
+        int startRow = localRow * 3;
+        int startCol = localCol * 3;
+        // Check rows, columns, and diagonals for potential wins
+        for (int i = 0; i < 3; i++) {
+            if (board[startRow + i][startCol] == opponent &&
+                    board[startRow + i][startCol + 1] == opponent &&
+                    board[startRow + i][startCol + 2] == Mark.EMPTY) {
+                return true;
+            }
+            if (board[startRow][startCol + i] == opponent &&
+                    board[startRow + 1][startCol + i] == opponent &&
+                    board[startRow + 2][startCol + i] == Mark.EMPTY) {
+                return true;
+            }
+        }
+
+        if (board[startRow][startCol] == opponent &&
+                board[startRow + 1][startCol + 1] == opponent &&
+                board[startRow + 2][startCol + 2] == Mark.EMPTY) {
+            return true;
+
+        }
+
+        if (board[startRow][startCol + 2] == opponent &&
+                board[startRow + 1][startCol + 1] == opponent &&
+                board[startRow + 2][startCol] == Mark.EMPTY) {
+            return true;
+        }
+        return false;
+
     }
 
     private int evaluateSubBoard(int row, int col, Mark mark) {
@@ -68,10 +126,10 @@ class Board {
                 if (board[row + j][col + i] == mark) colCountMark++;
                 else if (board[row + j][col + i] == opponent) colCountOpponent++;
             }
-            if (rowCountMark == 2 && rowCountOpponent == 0) score += 50;
-            if (colCountMark == 2 && colCountOpponent == 0) score += 50;
-            if (rowCountOpponent == 2 && rowCountMark == 0) score -= 50;
-            if (colCountOpponent == 2 && colCountMark == 0) score -= 50;
+            if (rowCountMark == 2 && rowCountOpponent == 0) score += 20;
+            if (colCountMark == 2 && colCountOpponent == 0) score += 20;
+            if (rowCountOpponent == 2 && rowCountMark == 0) score -= 20;
+            if (colCountOpponent == 2 && colCountMark == 0) score -= 20;
         }
 
         // Check diagonals
@@ -273,13 +331,23 @@ class Board {
 
     public ArrayList<Move> checkSubGridMoves() {
         ArrayList<Move> validMoves = new ArrayList<>();
-        if (lastRow == -1 || lastCol == -1) return getAvailableMoves();
 
-        int targetLocalRow = lastRow % 3;
-        int targetLocalCol = lastCol % 3;
+        if (lastRow == -1 || lastCol == -1) {
+            // First move: all moves are allowed
+            return getAvailableMoves();
+        }
 
-        if (isLocalGridComplete(targetLocalRow, targetLocalCol)) {
-            // Target grid is full or won look across all subgrids
+        // Determine subgrid to play in based on last move
+        int targetGridRow = lastRow % 3;
+        int targetGridCol = lastCol % 3;
+        int startRow = targetGridRow * 3;
+        int startCol = targetGridCol * 3;
+
+        if (!isLocalGridComplete(targetGridRow, targetGridCol)) {
+            // Target subgrid is valid, return moves only in that 3x3 area
+            collectEmptyCells(startRow, startCol, validMoves);
+        } else {
+            // Subgrid is full or won, player can choose from all other playable subgrids
             for (int localRow = 0; localRow < 3; localRow++) {
                 for (int localCol = 0; localCol < 3; localCol++) {
                     if (!isLocalGridComplete(localRow, localCol)) {
@@ -287,10 +355,8 @@ class Board {
                     }
                 }
             }
-        } else {
-            // Target grid is playable
-            collectEmptyCells(targetLocalRow * 3, targetLocalCol * 3, validMoves);
         }
+
         return validMoves;
     }
 
