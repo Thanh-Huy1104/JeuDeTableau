@@ -372,8 +372,8 @@ class Board {
 
     public void displayBoard() {
         System.out.println("\n  A B C | D E F | G H I");
-        for (int i = 0; i < SIZE; i++) {
-            if (i % 3 == 0 && i != 0) {
+        for (int i = SIZE - 1; i >= 0; i--) {
+            if ((i + 1) % 3 == 0 && i != SIZE - 1) {
                 System.out.println("  ------+-------+------");
             }
 
