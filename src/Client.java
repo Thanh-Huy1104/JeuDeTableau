@@ -24,21 +24,31 @@ class Client {
                 char cmd = (char) input.read();
                 System.out.println("Commande reçue: " + cmd);
 
-                if (cmd == START_AS_X || cmd == START_AS_O) {
-                    cpu = new CPUPlayer(cmd == '1' ? Mark.X : Mark.O);
+                if (cmd == START_AS_X) {
+                    cpu = new CPUPlayer(Mark.X);
                     byte[] buffer = new byte[1024];
                     int size = input.available();
                     input.read(buffer, 0, size);
                     String s = new String(buffer).trim();
                     System.out.println("Plateau initial: " + s);
                     board.init(s);
-
                     Move firstMove = cpu.getBestLocalMove(board, 7);
                     board.play(firstMove, cpu.getMark());
                     String moveString = firstMove.toString();
                     output.write(moveString.getBytes(), 0, moveString.length());
                     output.flush();
                     System.out.println("Premier coup joué: " + moveString);
+                }
+
+                if (cmd == START_AS_O) {
+                    cpu = new CPUPlayer(Mark.O);
+                    System.out.println("Nouvelle partie! Vous jouer O, attendez le coup des X");
+                    byte[] aBuffer = new byte[1024];
+
+                    int size = input.available();
+                    input.read(aBuffer, 0, size);
+                    String s = new String(aBuffer).trim();
+                    board.init(s);
                 }
 
                 if (cmd == NEXT_MOVE) {
@@ -59,6 +69,7 @@ class Client {
                     output.write(moveString.getBytes(), 0, moveString.length());
                     output.flush();
                     System.out.println("Coup joué: " + moveString);
+                    board.displayBoard();
                 }
 
                 if (cmd == INVALID_MOVE) {
