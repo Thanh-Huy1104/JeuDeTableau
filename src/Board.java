@@ -369,4 +369,36 @@ class Board {
             }
         }
     }
+
+    public void displayBoard() {
+        System.out.println("\n  A B C | D E F | G H I");
+        for (int i = 0; i < SIZE; i++) {
+            if (i % 3 == 0 && i != 0) {
+                System.out.println("  ------+-------+------");
+            }
+
+            System.out.print((i + 1) + " ");
+            for (int j = 0; j < SIZE; j++) {
+                if (j % 3 == 0 && j != 0) {
+                    System.out.print("| ");
+                }
+
+                char symbol;
+                switch (board[i][j]) {
+                    case X:
+                        symbol = 'X';
+                        break;
+                    case O:
+                        symbol = 'O';
+                        break;
+                    default:
+                        symbol = '.';
+                }
+
+                System.out.print(symbol + " ");
+            }
+            System.out.println();
+        }
+        System.out.println();
+    }
 }
