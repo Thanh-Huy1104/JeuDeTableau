@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 class CPUPlayer {
@@ -15,37 +16,6 @@ class CPUPlayer {
     public int getNumOfExploredNodes() {
         return numExploredNodes;
     }
-
-    private int minimax(Board board, int depth, boolean isMax, long startTime) {
-        numExploredNodes++;
-
-        //
-        if (depth == 0 || board.checkSubGridMoves().isEmpty() || (System.currentTimeMillis() - startTime) > 2500) {
-            return board.evaluate(cpu);
-        }
-
-        if (isMax) {
-            int bestValue = Integer.MIN_VALUE;
-            for (Move move : board.checkSubGridMoves()) {
-                board.play(move, cpu);
-                int value = minimax(board, depth - 1, false, startTime);
-                board.undo(move);
-                bestValue = Math.max(bestValue, value);
-            }
-            return bestValue;
-        } else {
-            int bestValue = Integer.MAX_VALUE;
-            Mark opponent = getOpponentMark();
-            for (Move move : board.checkSubGridMoves()) {
-                board.play(move, opponent);
-                int value = minimax(board, depth - 1, true, startTime);
-                board.undo(move);
-                bestValue = Math.min(bestValue, value);
-            }
-            return bestValue;
-        }
-    }
-
 
     private int alphaBeta(Board board, int depth, int alpha, int beta, boolean isMax, long startTime) {
         numExploredNodes++;
@@ -80,7 +50,6 @@ class CPUPlayer {
     public Move getBestLocalMove(Board board, int maxDepth) {
         ArrayList<Move> validMoves = board.checkSubGridMoves();
         if (validMoves.isEmpty()) {
-            System.out.println("⚠ Aucune case valide trouvée, IA joue un coup aléatoire !");
             return getFirstValidMove(board);
         }
 
@@ -89,14 +58,11 @@ class CPUPlayer {
         long startTime = System.currentTimeMillis();
         numExploredNodes = 0;
 
-
-
-
-        // Explore each valid move and select the best one
         for (Move move : validMoves) {
             board.play(move, cpu);
             int score = alphaBeta(board, maxDepth - 1, Integer.MIN_VALUE, Integer.MAX_VALUE, false, startTime);
             board.undo(move);
+
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = move;
@@ -104,22 +70,30 @@ class CPUPlayer {
         }
 
         if (bestMove == null) {
-            System.out.println("⚠ ERREUR: Aucun coup MinMax valide, choix aléatoire");
             return getFirstValidMove(board);
         }
 
-        // Log the move and display the board
-        System.out.println("IA (" + cpu + ") joue : " + bestMove + " (Score: " + bestScore + ", Noeuds explorés: " + numExploredNodes + ")");
-        board.play(bestMove, cpu);
-        board.undo(bestMove);
+        logMove(bestMove, bestScore);
 
         return bestMove;
     }
 
+    private void logMove(Move move, int score) {
+        System.out.println(String.format(
+                "IA (%s) joue : %s (Score: %d, Noeuds explorés: %d)",
+                cpu, move, score, numExploredNodes));
+    }
+
     public Move getFirstValidMove(Board board) {
-        ArrayList<Move> moves = board.checkSubGridMoves();
+        List<Move> moves = board.checkSubGridMoves();
+
+        if (moves.isEmpty()) {
+            throw new IllegalStateException("Aucune case valide disponible pour jouer.");
+        }
+
         return moves.get(random.nextInt(moves.size()));
     }
+
 
     public Mark getOpponentMark() {
         return cpu == Mark.X ? Mark.O : Mark.X;

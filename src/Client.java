@@ -30,8 +30,7 @@ class Client {
                     int size = input.available();
                     input.read(buffer, 0, size);
                     String s = new String(buffer).trim();
-                    System.out.println("Plateau initial: " + s);
-                    board.init(s);
+                    board.setUpBoard(s);
                     Move firstMove = cpu.getBestLocalMove(board, 7);
                     board.play(firstMove, cpu.getMark());
                     String moveString = firstMove.toString();
@@ -48,7 +47,7 @@ class Client {
                     int size = input.available();
                     input.read(aBuffer, 0, size);
                     String s = new String(aBuffer).trim();
-                    board.init(s);
+                    board.setUpBoard(s);
                 }
 
                 if (cmd == NEXT_MOVE) {
@@ -63,12 +62,12 @@ class Client {
                         board.play(move, cpu.getOpponentMark());
                     }
 
-                    Move nextMove = cpu.getBestLocalMove(board, 7); // Depth 7 for strength
+                    Move nextMove = cpu.getBestLocalMove(board, 7);
                     board.play(nextMove, cpu.getMark());
                     String moveString = nextMove.toString();
                     output.write(moveString.getBytes(), 0, moveString.length());
                     output.flush();
-                    System.out.println("Coup joué: " + moveString);
+                    System.out.println("Moved played: " + moveString);
                     board.displayBoard();
                 }
 
