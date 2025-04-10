@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
 
 import javax.swing.JOptionPane;
 
@@ -16,19 +17,22 @@ class Client {
     static Board board = new Board();
     static CPUPlayer cpu = new CPUPlayer(Mark.X);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UnknownHostException {
+        InetAddress localHost = InetAddress.getLocalHost();
+        String localIP = localHost.getHostAddress();
+        System.out.println("Votre adresse IP locale : " + localIP);
+
+        // Ask the user for the server's IP address
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Entrez l'adresse IP du serveur (par défaut: localhost) : ");
+        String serverIP = scanner.nextLine().trim();
+        if (serverIP.isEmpty()) {
+            serverIP = "localhost"; // Default to localhost if no input
+        }
+
         try {
-           String ip = "localhost";
-            int port = 8888;
 
-            if (args.length == 0) {
-                ip = JOptionPane.showInputDialog("Entrez l'adresse IP du serveur :", "localhost");
-                if (ip == null || ip.isEmpty()) ip = "localhost";
-            } else {
-                ip = args[0];
-            }
-
-            MyClient = new Socket(ip, port);
+            MyClient = new Socket(serverIP, 8888);
             input = new BufferedInputStream(MyClient.getInputStream());
             output = new BufferedOutputStream(MyClient.getOutputStream());
 
