@@ -15,8 +15,17 @@ class Client {
     static CPUPlayer cpu = new CPUPlayer(Mark.X);
 
     public static void main(String[] args) {
+        String host = "localhost"; // Default host
+        
+        // Check if a host address is provided as a command-line argument
+        if (args.length > 0) {
+            host = args[0];
+        }
+        
+        System.out.println("Connecting to server at: " + host);
+        
         try {
-            MyClient = new Socket("localhost", 8888);
+            MyClient = new Socket(host, 8888);
             input = new BufferedInputStream(MyClient.getInputStream());
             output = new BufferedOutputStream(MyClient.getOutputStream());
 
