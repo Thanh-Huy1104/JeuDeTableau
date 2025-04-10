@@ -1,6 +1,8 @@
 import java.io.*;
 import java.net.*;
 
+import javax.swing.JOptionPane;
+
 // Class handling communication with the server and AI gameplay
 class Client {
     static Socket MyClient;
@@ -16,7 +18,17 @@ class Client {
 
     public static void main(String[] args) {
         try {
-            MyClient = new Socket("localhost", 8888);
+           String ip = "localhost";
+            int port = 8888;
+
+            if (args.length == 0) {
+                ip = JOptionPane.showInputDialog("Entrez l'adresse IP du serveur :", "localhost");
+                if (ip == null || ip.isEmpty()) ip = "localhost";
+            } else {
+                ip = args[0];
+            }
+
+            MyClient = new Socket(ip, port);
             input = new BufferedInputStream(MyClient.getInputStream());
             output = new BufferedOutputStream(MyClient.getOutputStream());
 
